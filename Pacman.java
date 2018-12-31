@@ -58,7 +58,7 @@ Color colores[] = {Color.red,Color.blue,Color.orange,Color.pink};
 for(int n = 0;n<4;n++){
 int gx = (int)Math.round(((double)screenX)*Math.random());
 int gy = (int)Math.round(((double)screenY)*Math.random());
-Ghosts.add(new ghost(gx,gy,4*n,colores[n]));
+Ghosts.add(new ghost(gx,gy,10*n,colores[n]));
 }
 Pacmans = new Vector<pac>();
 Pacmans.add(new pac(screenX/2,screenY/2,Color.yellow,15,0));
@@ -168,15 +168,16 @@ off.fillOval(screenMarX+15*n+5,screenMarY+15*m+5,5,5);
 //pintar pacmans
 for(int n = 0;n<Pacmans.size();n++){
 off.setColor(Pacmans.get(n).color);
-int st=135+90*Pacmans.get(n).dir;
+int st=Pacmans.get(n).dir%2==1?135+90*((Pacmans.get(n).dir+2)%4):135+90*Pacmans.get(n).dir;
 if(animacion>0)
 off.fillArc(screenMarX+(int)Pacmans.get(n).x,
 screenMarY+(int)Pacmans.get(n).y,
 Pacmans.get(n).tam,Pacmans.get(n).tam,st,(Pacmans.get(n).tiempo<2?-270:-360)+(animacion*315/30));
-else
+else{
 off.fillArc(screenMarX+(int)Pacmans.get(n).x,
 screenMarY+(int)Pacmans.get(n).y,
 Pacmans.get(n).tam,Pacmans.get(n).tam,st,Pacmans.get(n).tiempo<2?-270:-360);
+}
 }
 //pintar ghosts
 for(int n = 0;n<Ghosts.size();n++){
@@ -184,9 +185,9 @@ off.setColor(Ghosts.get(n).color);
 off.fillRect(screenMarX+(int)Ghosts.get(n).x,
 screenMarY+(int)Ghosts.get(n).y,Ghosts.get(n).tam,Ghosts.get(n).tam);
 if(Pacmans.get(0).modoRambo){
-off.setColor(new Color(10,10,10));
-off.fillOval(screenMarX+(int)Ghosts.get(n).x+1,
-screenMarY+(int)Ghosts.get(n).y+1,Ghosts.get(n).tam-1,Ghosts.get(n).tam-1);
+off.setColor(new Color(0,0,126));
+off.fillRect(screenMarX+(int)Ghosts.get(n).x+1,
+screenMarY+(int)Ghosts.get(n).y+1,Ghosts.get(n).tam-2,Ghosts.get(n).tam-2);
 }
 }
 if(pausa){
@@ -216,7 +217,16 @@ public void windowIconified(WindowEvent e){}
 public void windowOpened(WindowEvent e){}
 public void windowClosing(WindowEvent e){}
 public void actionPerformed(ActionEvent e){}
-
+public static double dist(double a,double b,int c){//x1,x2,lengthofScreen
+double mi = Math.min(a,b);
+double ma = Math.max(a,b);
+return Math.min(ma-mi,mi+c-ma);
+}
+public static int distDir(double a,double b,int c){
+if(a<b)
+return b-a<a+c-b?1:0;
+return a-b<b+c-a?0:1;
+}
 }
 class pell{
 double x, y;
@@ -246,31 +256,29 @@ if((int)Math.round(100.0*Math.random())%6==0)
 dir = (ra+dir)%4;
 boolean estamosRambo = Pacman.Pacmans.get(0).modoRambo;
 if(((int)Math.round(((double)type)*Math.random()))%5==0 || estamosRambo){
-int minD = Integer.MAX_VALUE;
+double minD = Double.MAX_VALUE;
 int pacTar = 0;
 for(int n = 0;n<Pacman.Pacmans.size();n++){
-int disP = (int)Math.abs(Pacman.Pacmans.get(n).x-x)+(int)Math.abs(Pacman.Pacmans.get(n).y-y);
+double disP = Pacman.dist(Pacman.Pacmans.get(n).x,x,Pacman.screenX)+
+Pacman.dist(Pacman.Pacmans.get(n).y,y,Pacman.screenY);
 minD = Math.min(minD,disP);
 if(minD==disP)pacTar=n;
 }
-if(Pacman.Pacmans.get(pacTar).x<=x){
-if(Math.abs(y-Pacman.Pacmans.get(pacTar).y)>Math.abs(x-Pacman.Pacmans.get(pacTar).x)){
-if(Pacman.Pacmans.get(pacTar).y<y)
-dir =estamosRambo?3:1;
-else
-dir = estamosRambo?1:3;
-}else
-dir = estamosRambo?2:0;
-}else{
-if(Math.abs(y-Pacman.Pacmans.get(pacTar).y)>Math.abs(x-Pacman.Pacmans.get(pacTar).x)){
-if(Pacman.Pacmans.get(pacTar).y<y)
-dir =estamosRambo?3:1;
-else
-dir = estamosRambo?1:3;
-}else
-dir = estamosRambo?0:2;
+
+double distX = Pacman.dist(x,Pacman.Pacmans.get(pacTar).x,Pacman.screenX);
+double distY = Pacman.dist(y,Pacman.Pacmans.get(pacTar).y,Pacman.screenY);
+int dirX = Pacman.distDir(x,Pacman.Pacmans.get(pacTar).x,Pacman.screenX);
+int dirY = Pacman.distDir(y,Pacman.Pacmans.get(pacTar).y,Pacman.screenY);
+if(estamosRambo){
+dirX =1-dirX;
+dirY = 1-dirY;
 }
+if(distX>distY)
+dir = 2*dirX;
+else
+dir = 2*dirY+1;
 }
+
 //if(type==1)
 //System.out.println(color+" "+type+": "+dir);
 x+=dv[dir][0]*(tam-(modoRambo?5:0));
